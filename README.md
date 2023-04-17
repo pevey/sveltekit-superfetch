@@ -9,7 +9,7 @@ The options are not required, and will default to a timeout of 8 seconds with no
 
 ```js
 
-import superFetch from 'sveltekit-superFetch'
+import superFetch from 'sveltekit-superfetch'
 
 // Example with POST method, headers, and body
 const response = await superFetch('https://example.org', {
