@@ -29,3 +29,5 @@ const response = await superFetch('https://example.org', {
 const response = await superFetch("https://example.org")
 
 ```
+
+Errors displayed in the js console will helpfully display the url of any failed fetch request.
