@@ -1,7 +1,7 @@
 {
 	"name": "sveltekit-superfetch",
 	"version": "1.0.5",
-	"description": "Extremely small svelte component that adds a fetch wrapper function (superFetch) with retry and timeout options.",
+	"description": "Extremely small svelte component that adds a fetch wrapper function (superFetch) with retry and timeout options",
 	"repository": {
       "type": "git",
       "url": "https://github.com/pevey/sveltekit-superfetch"
