@@ -4,7 +4,7 @@ This extremely small sveltekit component is a simple fetch wrapper function (sup
 
 ## Usage
 
-Usage is identical to the basic fetch in Sveltekit, with the exception of two additional configuation options.  
+Usage is identical to the basic fetch in Sveltekit, with the exception of two additional configuration options.  
 The options are not required, and will default to a timeout of 8 seconds with no retries if no values for the options are specified.
 
 ```js
