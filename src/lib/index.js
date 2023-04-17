@@ -1,5 +1,5 @@
 const superFetch = async (url, options) => {
-   const { timeout = 8000, retry = 3 } = options
+   const { timeout = 8000, retry = 0 } = options
    try {
       const controller = new AbortController()
       const id = setTimeout(() => controller.abort(), timeout)
