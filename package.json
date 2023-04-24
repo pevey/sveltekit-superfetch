@@ -6,6 +6,7 @@
       "type": "git",
       "url": "https://github.com/pevey/sveltekit-superfetch"
    },
+	"homepage": "https://pevey.com/sveltekit-superfetch",
 	"author": "Lacey Pevey",
 	"license": "MIT",
 	"keywords": [
