@@ -1,52 +1,63 @@
 {
-   "name": "sveltekit-superfetch",
-   "version": "1.0.6",
-   "description": "Extremely small svelte component that adds a fetch wrapper function (superFetch) with retry and timeout options",
-   "repository": {
-      "type": "git",
-      "url": "https://github.com/pevey/sveltekit-superfetch"
-   },
-   "homepage": "https://pevey.com/sveltekit-superfetch",
-   "author": "Lacey Pevey",
-   "license": "MIT",
-   "keywords": [
-     "svelte",
-     "sveltekit",
-     "fetch"
-   ],
-   "scripts": {
-      "dev": "vite dev",
-      "build": "vite build && npm run package",
-      "preview": "vite preview",
-      "package": "svelte-kit sync && svelte-package && publint",
-      "prepublishOnly": "npm run package"
-   },
-   "exports": {
-      ".": {
-         "types": "./dist/index.d.ts",
-         "svelte": "./dist/index.js"
-      }
-   },
-   "files": [
-      "dist",
-      "!dist/**/*.test.*",
-      "!dist/**/*.spec.*"
-   ],
-   "peerDependencies": {
-      "svelte": "^4.0.0"
-   },
-   "devDependencies": {
-      "@sveltejs/adapter-auto": "^2.0.0",
-      "@sveltejs/kit": "^1.20.4",
-      "@sveltejs/package": "^2.0.0",
-      "publint": "^0.1.9",
-      "svelte": "^4.0.0",
-      "svelte-check": "^3.4.3",
-      "tslib": "^2.4.1",
-      "typescript": "^5.0.0",
-      "vite": "^4.3.6"
-   },
-   "svelte": "./dist/index.js",
-   "types": "./dist/index.d.ts",
-   "type": "module"
+	"name": "sveltekit-superfetch",
+	"version": "2.0.0",
+	"description": "SvelteKit libary for server-side fetching and caching of data with support for logging via console, filesystem, Redis, and/or webhooks",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/pevey/sveltekit-superfetch"
+	},
+	"homepage": "https://pevey.com/sveltekit-superfetch",
+	"author": "Lacey Pevey",
+	"license": "MIT",
+	"keywords": [
+		"svelte",
+		"sveltekit",
+		"fetch",
+		"cache",
+		"redis",
+		"server-side"
+	],
+	"scripts": {
+		"dev": "vite dev",
+		"build": "shx rm -rf ./dist && vite build && npm run package",
+		"preview": "vite preview",
+		"package": "svelte-kit sync && svelte-package && publint",
+		"prepublishOnly": "npm run package",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "vitest"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"svelte": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"!dist/**/*.test.*",
+		"!dist/**/*.spec.*"
+	],
+	"peerDependencies": {
+		"svelte": "^4.0.0"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^2.0.0",
+		"@sveltejs/kit": "^1.20.4",
+		"@sveltejs/package": "^2.0.0",
+		"publint": "^0.1.9",
+		"shx": "^0.3.4",
+		"svelte": "^4.0.5",
+		"svelte-check": "^3.4.3",
+		"tslib": "^2.4.1",
+		"typescript": "^5.0.0",
+		"vite": "^4.4.2",
+		"vitest": "^0.33.0"
+	},
+	"dependencies": {
+		"nanoid": "^4.0.2"
+	},
+	"svelte": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"type": "module"
 }
