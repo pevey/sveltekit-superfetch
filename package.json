@@ -1,7 +1,7 @@
 {
 	"name": "sveltekit-superfetch",
 	"version": "2.0.0",
-	"description": "SvelteKit libary for server-side fetching and caching of data with support for logging via console, filesystem, Redis, and/or webhooks",
+	"description": "SvelteKit libary for fetching with support for optional loging of requests and responses",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/pevey/sveltekit-superfetch"
@@ -12,10 +12,7 @@
 	"keywords": [
 		"svelte",
 		"sveltekit",
-		"fetch",
-		"cache",
-		"redis",
-		"server-side"
+		"fetch"
 	],
 	"scripts": {
 		"dev": "vite dev",
