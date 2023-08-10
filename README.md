@@ -4,7 +4,7 @@ SvelteKit libary for interacting with APIs with support for optional loging of r
 
 ## Usage
 
-Usage is to using the standard fetch API.  No options are required.  The fetcher will default to a timeout of 8 seconds and 3 retries if no values for those options are specified.
+Usage is similar to using the standard fetch API.  No options are required.  The fetcher will default to a timeout of 8 seconds and 3 retries if no values for those options are specified.
 
 (The examples below work with v2.0.0 and above.)
 
