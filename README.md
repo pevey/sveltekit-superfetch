@@ -30,7 +30,7 @@ export default const superFetch = new SuperFetch({
    logger: logger, // injected logger instance, default is `console`, must implement info() and error()
    logFormat: 'json', // text or json, default is json
    excludedPaths: ['/api/auth'], // an array of strings, fetches to routes containing these strings will not be logged
-   limitedPaths: [/] // an array of strings, log entries will not contain headers, bodies, cookies, or url params
+   limitedPaths: ['/'] // an array of strings, log entries will not contain headers, bodies, cookies, or url params
 })
 ```
 
