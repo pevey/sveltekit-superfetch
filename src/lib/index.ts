@@ -1,11 +1,14 @@
 import { nanoid } from 'nanoid/non-secure'
+import TTLCache from '@isaacs/ttlcache'
+import { dev } from '$app/environment'
 
 export interface SuperFetchOptions {
    timeout?: number
    retry?: number
-   debug?: boolean
+   ttl?: number
    logger?: Logger
    logFormat?: 'text' | 'json' | 'majel'
+   logLevel?: 'verbose' | 'limited' | 'silent'
    excludedPaths?: string[]
    limitedPaths?: string[]
 }
@@ -15,6 +18,9 @@ export interface FetchOptions {
    method?: string
    headers?: []
    body?: any
+   key?: string
+   ttl?: number
+   logLevel?: 'verbose' | 'limited' | 'silent'
 }
 
 export interface Logger {
@@ -37,58 +43,60 @@ interface MajelFormat {
 export class SuperFetch {
    private timeout: number = 8000
    private retry: number = 3
-   private debug: boolean = false
    private logger: Logger = console
    private logFormat: 'text' | 'json' | 'majel' = 'json'
+   private logLevel: 'verbose' | 'limited' | 'silent' = (dev)? 'limited' : 'silent'
    private excludedPaths: string[] = []
    private limitedPaths: string[] = []
+   private ttl: number = 1000
+   private cache: TTLCache<string, any>
    private formatRequest: Function
    private formatResponse: Function
 
    constructor(options?: SuperFetchOptions) {
       if (options) {
-         const { timeout, retry, debug, logger, logFormat, excludedPaths, limitedPaths }: SuperFetchOptions = options
+         const { timeout, retry, logger, logFormat, logLevel, excludedPaths, limitedPaths, ttl }: SuperFetchOptions = options
          if (timeout) { this.timeout = timeout }
          if (retry) { this.retry = retry }
-         if (debug) { this.debug = debug }
          if (logger) { this.logger = logger }
          if (logFormat) { this.logFormat = logFormat }
-         // if logger is typeof MajelLogger, logFormat = 'reqres'
-         if (this.logFormat === 'majel') { this.debug = true }
+         if (logLevel) { this.logLevel = logLevel }
          if (excludedPaths) { this.excludedPaths = excludedPaths }
          if (limitedPaths) { this.limitedPaths = limitedPaths }
+         if (ttl) { this.ttl = ttl }
       }
-      switch (this.logFormat) {
 
+      this.cache = new TTLCache({ ttl: this.ttl })
+
+      switch (this.logFormat) {
          case 'majel':
-            this.formatRequest = function (id: string, options: FetchOptions) {
+            this.formatRequest = function (logLevel: string, id: string, options: FetchOptions) {
                let { url, ...rest }: FetchOptions = options
-               const limited = this.limitedPaths.find((limited: string) => url.includes(limited))
                let request: Request = new Request(url, rest)
-               if (limited) url = (new URL(url)).pathname // strip out query params
+               if (logLevel === 'limited') url = (new URL(url)).pathname // strip out query params
                let entry: MajelFormat = {
                   id,
-                  limited: (limited !== undefined),
+                  limited: (logLevel === 'limited'),
                   type: 'request',
                   timestamp: Date.now(),
                   url
                }
-               if (request && !limited) {
+               if (request && (logLevel === 'verbose')) {
                   entry.request = request
                }
                return entry
             }
-            this.formatResponse = function (id: string, url: string, response: Response|undefined, error?: Error) {
-               const limited = this.limitedPaths.find((limited: string) => url.includes(limited))
-               if (limited) { url = (new URL(url)).pathname } // strip out query params 
+            this.formatResponse = function (logLevel: string, id: string, options: FetchOptions, response: Response|undefined, error?: Error) {
+               let { url, ...rest }: FetchOptions = options
+               if (logLevel === 'limited') { url = (new URL(url)).pathname } // strip out query params 
                let entry: MajelFormat = {
                   id,
-                  limited: (limited !== undefined),
+                  limited: (logLevel === 'limited'),
                   type: 'response',
                   timestamp: Date.now(),
                   url
                }
-               if (response && !limited) {
+               if (response && (logLevel === 'verbose')) {
                   entry.response = response
                }
                if (error) {
@@ -96,50 +104,49 @@ export class SuperFetch {
                }
                return entry
             }
-            break;
-         
+            break;         
          case 'text':
-
-            this.formatRequest = function (id: string, options: FetchOptions) {
+            this.formatRequest = function (logLevel: string, id: string, options: FetchOptions) {
                let { url, ...rest }: FetchOptions = options
-               const limited = this.limitedPaths.find((limited: string) => options.url.includes(limited))
-               if (limited) {
-                  url = (new URL(url)).pathname // strip out query params
+               if (logLevel === 'limited') {
+                  url = (new URL(url)).pathname  // strip out query params
                   return `Fetch Request (${id}): ${url}`
                } else {
                   return `Fetch Request (${id}): ${JSON.stringify(options)}`
                }
             }
-            this.formatResponse = function (id: string, url: string, response: Response|undefined, error?: Error) {
-               const limited = this.limitedPaths.find((limited: string) => url.includes(limited))
-               if (limited) { url = (new URL(url)).pathname } // strip out query params
+            this.formatResponse = function (logLevel: string, id: string, options: FetchOptions, response: Response|undefined, error?: Error) {
+               let { url, ...rest }: FetchOptions = options
+               if (logLevel === 'limited') { 
+                  url = (new URL(url)).pathname  // strip out query params
+               } 
                return (error)?
-                  `Fetch Response (${id}): ${JSON.stringify({ url: url, error: error.message })}`:
-                  `Fetch Response (${id}): ${JSON.stringify({ url: url, status: response?.status, statusText: response?.statusText })}`
+                  `Fetch Response (${id}): ${JSON.stringify({ url, error: error.message })}`:
+                  `Fetch Response (${id}): ${JSON.stringify({ url, status: response?.status, statusText: response?.statusText })}`
             }
             break;
-
          default: // json
-
-            this.formatRequest = function (id: string, options: FetchOptions) {
+            this.formatRequest = function (logLevel: string, id: string, options: FetchOptions) {
                let { url, ...rest }: FetchOptions = options
-               const limited = this.limitedPaths.find((limited: string) => url.includes(limited))
-               if (limited) { url = (new URL(url)).pathname } // strip out query params
+               if (logLevel === 'limited') { 
+                  url = (new URL(url)).pathname  // strip out query params
+               } 
                let entry: any = {
                   id: id,
                   type: 'request',
                   timestamp: new Date().toISOString(),
-                  url: url
+                  url
                }
-               if (!limited) { entry.options = rest }
+               if (logLevel === 'verbose') { entry.options = rest }
                return entry
             }
-            this.formatResponse = function (id: string, url: string, response: Response|undefined, error?: Error) {
-               const limited = this.limitedPaths.find((limited: string) => url.includes(limited))
-               if (limited) { url = (new URL(url)).pathname } // strip out query params
+            this.formatResponse = function (logLevel: string, id: string, options: FetchOptions, response: Response|undefined, error?: Error) {
+               let { url, ...rest }: FetchOptions = options
+               if (logLevel === 'limited') { 
+                  options.url = (new URL(options.url)).pathname  // strip out query params
+               } 
                let entry: any = {
                   id: id,
-                  //error: error?.message,
                   type: 'response',
                   timestamp: new Date().toISOString(),
                   url: url
@@ -147,7 +154,7 @@ export class SuperFetch {
                if (response) {
                   entry.status = response.status,
                   entry.statusText = response.statusText
-                  if (!limited) {
+                  if (logLevel === 'verbose') {
                      entry.headers = response.headers
                      entry.body = response.body
                   }
@@ -163,12 +170,32 @@ export class SuperFetch {
 
    public async query(options: FetchOptions): Promise<Response|null> {
       if (!options.url) return null
+      let response: Response|undefined = undefined
+      if (options.key) {
+         try {
+            let blob = this.cache.get(options.key)
+            if (blob) { 
+// console.log('cache hit')
+               response = new Response(blob)
+               return response 
+            }
+         } catch {}
+      }
       const id = nanoid()
       try { await this.logRequest(id, options) } catch {}
-      let response: Response|undefined = undefined
       try { response = await this.fetch(id, options) } catch {}
       if (!response) return null // an eror occurred and was already logged
-      try { await this.logResponse(id, options.url, response) } catch {}
+      try { await this.logResponse(id, options, response) } catch {}
+      if (options.key && response.body) {
+         const ttl = (options.ttl)? options.ttl : this.ttl
+         try {
+            let blob = await response.blob()
+            this.cache.set(options.key, blob, { ttl })
+            const cachedResponse = new Response(blob)
+// console.log('cache miss')
+            return cachedResponse
+         } catch {}
+      }
       return response
    }
 
@@ -186,27 +213,51 @@ export class SuperFetch {
          if (retry > 0) {
             return await this.fetch(id, options, retry - 1)
          } else {
-            this.logResponse(id, url, response, e)
+            this.logResponse(id, options, response, e)
             return response
          }
       }
    } 
 
    private async logRequest(id: string, options: FetchOptions): Promise<void> {
-      if (!this.debug) return
-      const excluded = this.excludedPaths.find((excluded: string) => options.url.includes(excluded))
-      if (excluded) return
-      const limited = this.limitedPaths.find((limited: string) => options.url.includes(limited))
-      const entry = this.formatRequest(id, options, limited)
+      const logLevel = this.getLogLevel(options)
+      if (logLevel === 'silent') return
+      const entry = this.formatRequest(logLevel, id, options)
       this.logger.info(entry)
    }
 
-   private async logResponse(id: string, url: string, response: Response|undefined, error?: Error): Promise<void> {
-      if (!this.debug) return
-      const excluded = this.excludedPaths.find((exclusion: string) => url.includes(exclusion))
-      if (excluded) return
-      const message = this.formatResponse(id, url, response, error)
-      if (error) this.logger.error(message)
-      else this.logger.info(message)
+   private async logResponse(id: string, options: FetchOptions, response: Response|undefined, error?: Error): Promise<void> {
+      const logLevel = this.getLogLevel(options)
+      if (logLevel === 'silent') return
+      const entry = this.formatResponse(logLevel, id, options, response, error)
+      if (error) this.logger.error(entry)
+      else this.logger.info(entry)
+   }
+
+   private getLogLevel(options: FetchOptions): string {
+      if (this.logLevel === 'silent' || options.logLevel === 'silent') { 
+         return 'silent' 
+      }
+      // check excluded paths
+      const excluded = this.excludedPaths.find((excluded: string) => options.url.includes(excluded))
+      if (excluded) {
+         if (options.logLevel && (options.logLevel === 'verbose' || options.logLevel === 'limited')) {
+            this.logger.info(`The logLevel for this individual query was set to ${options.logLevel}, but the query path is in the class-level excludedPaths array.  Suppressing log entry.`)
+         }
+         return 'silent'
+      }
+      if (options.logLevel === 'verbose') {
+         return 'verbose'
+      } else if (options.logLevel === 'limited') {
+         return 'limited'
+      } else if (this.logLevel === 'verbose') {
+         // check limited paths
+         if (this.limitedPaths.find((limited: string) => options.url.includes(limited))) {
+            return 'limited'
+         }
+         return 'verbose'
+      } else {
+         return 'limited'
+      }
    }
 }
