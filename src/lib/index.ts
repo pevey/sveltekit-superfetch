@@ -49,7 +49,7 @@ export class SuperFetch {
    private excludedPaths: string[] = []
    private limitedPaths: string[] = []
    private ttl: number = 1000
-   private cache: TTLCache<string, any>
+   private cache?: TTLCache<string, any>
    private formatRequest: Function
    private formatResponse: Function
 
@@ -65,8 +65,6 @@ export class SuperFetch {
          if (limitedPaths) { this.limitedPaths = limitedPaths }
          if (ttl) { this.ttl = ttl }
       }
-
-      this.cache = new TTLCache({ ttl: this.ttl })
 
       switch (this.logFormat) {
          case 'majel':
@@ -170,39 +168,26 @@ export class SuperFetch {
 
    public async query(options: FetchOptions): Promise<Response|null> {
       if (!options.url) return null
-      let response: Response|undefined = undefined
+      let response: Response|null = null
       if (options.key) {
-         try {
-            let blob = this.cache.get(options.key)
-            if (blob) { 
-// console.log('cache hit')
-               response = new Response(blob)
-               return response 
-            }
-         } catch {}
+         response = await this.getCache(options.key)
+         if (response) return response
       }
       const id = nanoid()
       try { await this.logRequest(id, options) } catch {}
       try { response = await this.fetch(id, options) } catch {}
       if (!response) return null // an eror occurred and was already logged
       try { await this.logResponse(id, options, response) } catch {}
-      if (options.key && response.body) {
-         const ttl = (options.ttl)? options.ttl : this.ttl
-         try {
-            let blob = await response.blob()
-            this.cache.set(options.key, blob, { ttl })
-            const cachedResponse = new Response(blob)
-// console.log('cache miss')
-            return cachedResponse
-         } catch {}
+      if (options.key) {
+         response = await this.setCache(response, options.key, options.ttl)
       }
       return response
    }
 
-   private async fetch(id: string, options: FetchOptions, retry: number = this.retry): Promise<Response|undefined> {
+   private async fetch(id: string, options: FetchOptions, retry: number = this.retry): Promise<Response|null> {
       const { url, ...rest }: FetchOptions = options
-      if (!url) return
-      let response: Response|undefined = undefined
+      if (!url) return null
+      let response: Response|null = null
       try {
          const controller = new AbortController()
          const id = setTimeout(() => controller.abort(), this.timeout)
@@ -219,6 +204,30 @@ export class SuperFetch {
       }
    } 
 
+   private async getCache(key: string): Promise<Response|null> {
+      if (!this.cache) return null
+      let response: Response|null = null
+      try {
+         let blob = this.cache.get(key)
+         if (blob) { 
+            response = new Response(blob)
+         }
+      } catch {}
+      return response
+   }
+
+   private async setCache(response: Response, key: string, ttl?: number): Promise<Response> {
+      if (!response?.body) return response
+      if (!this.cache) this.cache = new TTLCache({ ttl: this.ttl })
+      ttl = ttl || this.ttl
+      try {
+         let blob = await response.blob()
+         this.cache.set(key, blob, { ttl })
+         response = new Response(blob) // create a new response because readable stream on the original body was used up
+      } catch {}
+      return response
+   }
+
    private async logRequest(id: string, options: FetchOptions): Promise<void> {
       const logLevel = this.getLogLevel(options)
       if (logLevel === 'silent') return
@@ -226,7 +235,7 @@ export class SuperFetch {
       this.logger.info(entry)
    }
 
-   private async logResponse(id: string, options: FetchOptions, response: Response|undefined, error?: Error): Promise<void> {
+   private async logResponse(id: string, options: FetchOptions, response?: Response|null, error?: Error): Promise<void> {
       const logLevel = this.getLogLevel(options)
       if (logLevel === 'silent') return
       const entry = this.formatResponse(logLevel, id, options, response, error)

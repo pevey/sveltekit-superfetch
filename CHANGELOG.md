@@ -1,5 +1,10 @@
 # Change Log
 
+## 3.0.1
+
+- Internal refactoring of cache functions
+- Cache will no longer be created on construction of an instance.  The cache will be created the first time a query is run that attempts to set a value in the cache.
+
 ## 3.0.0
 
 - Added optional caching

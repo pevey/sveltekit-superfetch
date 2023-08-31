@@ -1,6 +1,6 @@
 {
 	"name": "sveltekit-superfetch",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"description": "SvelteKit libary for interacting with APIs with support for optional loging of requests and responses",
 	"repository": {
 		"type": "git",
