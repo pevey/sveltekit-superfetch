@@ -1,6 +1,6 @@
 # sveltekit-superfetch
 
-SvelteKit libary for interacting with APIs with support for optional loging of requests and responses
+SvelteKit libary for interacting with APIs with support for optional logging of requests and responses
 
 ## Usage
 
