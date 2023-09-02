@@ -20,6 +20,7 @@ export interface FetchOptions {
    body?: any
    key?: string
    ttl?: number
+   revalidate?: boolean
    logLevel?: 'verbose' | 'limited' | 'silent'
 }
 
@@ -169,7 +170,7 @@ export class SuperFetch {
    public async query(options: FetchOptions): Promise<Response|null> {
       if (!options.url) return null
       let response: Response|null = null
-      if (options.key) {
+      if (options.key && !options.revalidate) {
          response = await this.getCache(options.key)
          if (response) return response
       }
