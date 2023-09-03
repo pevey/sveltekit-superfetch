@@ -29,7 +29,7 @@ export default const superFetch = new SuperFetch({
    ttl: 1000, // 1 second. Max age of cached responses.  Only individual queries with a 'key' specified in the options will be cached.
    logger: logger, // injected logger instance, default is `console`, must implement info() and error()
    logFormat: 'json', // text or json, default is json
-   logLevel: 'verbose' | 'limited' | 'silent' // default is 'limited' in dev mode, 'silent' in prod
+   logLevel: 'verbose' | 'limited' | 'silent', // default is 'limited' in dev mode, 'silent' in prod
    excludedPaths: ['/api/auth'], // an array of strings, fetches to routes containing these strings will not be logged
    limitedPaths: ['/'] // an array of strings, log entries will not contain headers, bodies, cookies, or url params
 })
