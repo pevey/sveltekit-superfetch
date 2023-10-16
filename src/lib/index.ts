@@ -16,7 +16,7 @@ export interface SuperFetchOptions {
 export interface FetchOptions {
    url: string
    method?: string
-   headers?: []
+   headers?: {}
    body?: any
    key?: string
    ttl?: number

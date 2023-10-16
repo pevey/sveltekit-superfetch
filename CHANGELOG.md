@@ -1,5 +1,10 @@
 # Change Log
 
+## 3.0.3
+
+- Upgrade dependencies
+- Fix headers typing from [] to {}
+
 ## 3.0.2
 
 - Added query option: revalidate  If a cache key is passed and revalidate is set to true, this will cause the query to pull fresh data, cache the new data, and update the ttl.
